@@ -1,5 +1,5 @@
-var cols = 20;
-var rows = 20;
+var cols = 40;
+var rows = 40;
 var w, h;
 var grid = new Array(cols);
 
@@ -19,8 +19,9 @@ function removeFromArray(arr, elt) {
 }
 
 function heuristic(a, b) {
-	// return dist(a.i, a.j, b.i, b.j);
-	return abs(a.i - b.i) + abs(a.j - b.j);
+	// return (a.i-b.i)*(a.i-b.i) - (a.j-b.j)*(a.j-b.j);
+	return dist(a.i, a.j, b.i, b.j);
+	// return abs(a.i - b.i) + abs(a.j - b.j);
 }
 
 function Spot(i, j) {
@@ -41,7 +42,7 @@ function Spot(i, j) {
 		fill(color);
 		if (this.wall) fill(0);
 		noStroke();
-		rect(this.i * w, this.j * h, w-1, h-1);
+		ellipse(this.i * w + w/2, this.j * h + h/2, w, h);
 
 	}
 
@@ -52,6 +53,11 @@ function Spot(i, j) {
 		if (i > 0) this.neighbors.push(grid[i - 1][j]);
 		if (j < rows - 1) this.neighbors.push(grid[i][j + 1]);
 		if (j > 0) this.neighbors.push(grid[i][j - 1]);
+
+		if (i > 0 && j > 0) this.neighbors.push(grid[i-1][j-1]);
+		if (i < cols-1 && j > 0) this.neighbors.push(grid[i+1][j-1]);
+		if (i > 0 && j < rows-1) this.neighbors.push(grid[i-1][j+1]);
+		if (i < cols-1 && j < rows-1) this.neighbors.push(grid[i+1][j+1]);
 	}
 }
 
@@ -102,24 +108,31 @@ function draw() {
 			for (neighbor of neighbors) {
 				if (!closedSet.includes(neighbor) && !neighbor.wall){
 					var tempG = winner.g + 1;
+					var newPath = false;
 					if (openSet.includes(neighbor)) {
 						if (tempG < neighbor.g) {
 							neighbor.g = tempG;
+							newPath = true;
 						}
 					} else {
 						neighbor.g = tempG;
 						openSet.push(neighbor);
+						newPath = true;
 					}
 
-					neighbor.h = heuristic(neighbor, end);
-					neighbor.f = neighbor.g + neighbor.h;
-					neighbor.previous = winner;
+					if (newPath) {
+						neighbor.h = heuristic(neighbor, end);
+						neighbor.f = neighbor.g + neighbor.h;
+						neighbor.previous = winner;
+					}
 				}
 
 			}
 		}
 	} else {
-		//no solution
+		console.log("NO SOLUTION");
+		noLoop();
+		return;
 	}
 	// background(0);
 	for (var i = 0; i < cols; i++) {
@@ -143,7 +156,13 @@ function draw() {
 		path.push(temp.previous);
 		temp = temp.previous;
 	}
+
+	noFill();
+	stroke(255);
+	strokeWeight(w / 2);
+	beginShape();
 	for (p of path) {
-		p.show(color(0, 0, 255));
+		vertex(p.i*w + w/2, p.j*h + h/2);
 	}
+	endShape();
 }
