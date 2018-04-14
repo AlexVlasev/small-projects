@@ -2,8 +2,7 @@ var number = 40;
 var cols = number;
 var rows = number;
 var w, h;
-var path = [];
-
+var aStar;
 
 function heuristic(a, b) {
   // return (a.i-b.i)*(a.i-b.i) - (a.j-b.j)*(a.j-b.j);
@@ -16,7 +15,7 @@ function distanceFunction(a, b) {
 }
 
 class Node {
-  function constructor(f, g, h, i, j) {
+  constructor(f, g, h, i, j) {
     this.f = 0;
     this.g = 0;
     this.h = 0;
@@ -26,17 +25,17 @@ class Node {
     this.userData;
   }
 
-  function addNeighbors(neighbors) {
+  addNeighbors(neighbors) {
     this.neighbors = neighbors;
   }
 
-  function addUserData(userData) {
+  addUserData(userData) {
     this.userData = userData;
   }
 }
 
 class NodeVisual {
-  function constructor(node, x, y, semiX, semiY) {
+  constructor(node, x, y, semiX, semiY) {
     this.node = node;
     this.x = x;
     this.y = y;
@@ -44,7 +43,7 @@ class NodeVisual {
     this.semiY = semiY;
   }
 
-  function show(color) {
+  show(color) {
     fill(color);
     noStroke();
     ellipse(this.x, this.y, 2*this.semiX, 2*this.semiY);
@@ -109,19 +108,25 @@ function setup() {
     }
   }
 
-  start = graph[arrToKey([0, 0]);
-  end = graph[arraToKey([cols-1, rows-1])];
-  var aStar = new aStarSearch(start, end, distanceFunction, heuristic);
+  start = graph[arrToKey([0, 0])];
+  end = graph[arrToKey([cols-1, rows-1])];
+  aStar = new aStarSearch(start, end, distanceFunction, heuristic);
 }
 
 function draw() {
-  if (!aStar.openSet && !aStar.pathFound) {
+  if (aStar.pathFound) {
+    noLoop(); 
+    console.log("PATH FOUND");
+  }
+
+  if (aStar.openSet.size > 0 && !aStar.pathFound) {
+    console.log("Step");
     aStar.update();
   }
 
   for (key in graph) graphVisual[key].show(0);
-  for (node of closedSet) node.userData.show(color(255, 0, 0));
-  for (node of openSet) node.userData.show(color(0, 255, 0));
+  for (let node of aStar.closedSet) node.userData.show(color(255, 0, 0));
+  for (let node of aStar.openSet) node.userData.show(color(0, 255, 0));
 
-  drawPath(aStar.path());
+  if (!aStar.current == aStar.start) drawPath(aStar.path());
 }

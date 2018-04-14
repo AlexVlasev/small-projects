@@ -1,5 +1,5 @@
 class aStarSearch {
-    function constructor(start, end, distFxn, heuristicFxn) {
+    constructor(start, end, distFxn, heuristicFxn) {
         this.start = start;
         this.end = end;
         // Requirements for this to work: the distance and heuristic functions
@@ -13,10 +13,11 @@ class aStarSearch {
         this.current = undefined;
     }
 
-    function nodeWithMinF(set) {
+    nodeWithMinF(set) {
+        console.log(set);
         var minF = Infinity;
         var minElement = undefined;
-        for (element of set) {
+        for (let element of set) {
             if (element.f < minF) {
                 minElement = element;
                 minF = element.f;
@@ -24,8 +25,8 @@ class aStarSearch {
         }
     }
 
-    function update() {
-        this.current = this.nodeWithMinF(openSet);
+    update() {
+        this.current = this.nodeWithMinF(this.openSet);
         if (this.current == end) {
             this.pathFound = true;
         }
@@ -33,7 +34,8 @@ class aStarSearch {
         this.openSet.delete(this.current);
         this.closedSet.add(this.current);
 
-        for (neighbor of this.current.neighbors) {
+        console.log(this.current);
+        for (let neighbor of this.current.neighbors) {
             if (this.closedSet.has(neighbor)) {
                 return;
             }
@@ -52,16 +54,17 @@ class aStarSearch {
         }
     }
 
-    function run() {
+    run() {
         while (!this.openSet && !this.pathFound) {
             this.update();
         }
         return this.pathFound;
     }
 
-    function path() {
-        path = [this.current];
-        current = this.current;
+    path() {
+        var path = [this.current];
+        var current = this.current;
+        var previous = this.current.previous;
         while (previous.has(current)) {
             current = current.previous;
             path.push(current);
