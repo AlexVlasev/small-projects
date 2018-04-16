@@ -1,4 +1,4 @@
-var number = 40;
+var number = 10;
 var cols = number;
 var rows = number;
 var w, h;
@@ -19,9 +19,9 @@ class Node {
     this.f = 0;
     this.g = 0;
     this.h = 0;
-    this.i = 0;
-    this.j = 0;
-    this.neighbors;
+    this.i = i;
+    this.j = j;
+    this.neighbors = [];
     this.userData;
   }
 
@@ -72,6 +72,8 @@ function initNeighbors(node, graph) {
   if (i < cols-1 && j > 0) neighbors.push(graph[arrToKey([i+1, j-1])]);
   if (i > 0 && j < rows-1) neighbors.push(graph[arrToKey([i-1, j+1])]);
   if (i < cols-1 && j < rows-1) neighbors.push(graph[arrToKey([i+1, j+1])]);
+
+  return neighbors;
 }
 
 function drawPath(path) {
@@ -96,7 +98,7 @@ function setup() {
     for (var j = 0; j < rows; j++) {
       var key = arrToKey([i, j]);
       graph[key] = new Node(0, 0, 0, i, j);
-      graphVisual[key] = new NodeVisual(node, i*w + w/2, j*h + h/2, w/2, h/2);
+      graphVisual[key] = new NodeVisual(graph[key], i*w + w/2, j*h + h/2, w/2, h/2);
       graph[key].addUserData(graphVisual[key]);
     }
   }
@@ -120,7 +122,6 @@ function draw() {
   }
 
   if (aStar.openSet.size > 0 && !aStar.pathFound) {
-    console.log("Step");
     aStar.update();
   }
 

@@ -14,7 +14,6 @@ class aStarSearch {
     }
 
     nodeWithMinF(set) {
-        console.log(set);
         var minF = Infinity;
         var minElement = undefined;
         for (let element of set) {
@@ -23,6 +22,7 @@ class aStarSearch {
                 minF = element.f;
             }
         }
+        return minElement;
     }
 
     update() {
@@ -34,7 +34,6 @@ class aStarSearch {
         this.openSet.delete(this.current);
         this.closedSet.add(this.current);
 
-        console.log(this.current);
         for (let neighbor of this.current.neighbors) {
             if (this.closedSet.has(neighbor)) {
                 return;
@@ -43,7 +42,7 @@ class aStarSearch {
                 this.openSet.add(neighbor);
             }
 
-            tempGScore = this.current.g + this.distFxn(this.current, neighbor);
+            var tempGScore = this.current.g + this.distFxn(this.current, neighbor);
             if (tempGScore >= neighbor.g) {
                 return;
             }
