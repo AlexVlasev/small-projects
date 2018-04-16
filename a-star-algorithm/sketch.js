@@ -1,4 +1,4 @@
-var number = 10;
+var number = 70;
 var cols = number;
 var rows = number;
 var w, h;
@@ -11,7 +11,7 @@ function heuristic(a, b) {
 }
 
 function distanceFunction(a, b) {
-  return 1;
+  return abs(b.fudge - a.fudge);
 }
 
 class Node {
@@ -19,6 +19,8 @@ class Node {
     this.f = 0;
     this.g = 0;
     this.h = 0;
+    noiseDetail(8, 0.5);
+    this.fudge = 100*pow(noise(i*10/number, j*10/number), 4);
     this.i = i;
     this.j = j;
     this.neighbors = [];
@@ -47,7 +49,8 @@ class NodeVisual {
   show(color) {
     fill(color);
     noStroke();
-    ellipse(this.x, this.y, 2*this.semiX, 2*this.semiY);
+    // ellipse(this.x, this.y, 2*this.semiX, 2*this.semiY);
+    rect(this.x, this.y, 2*this.semiX, 2*this.semiY);
   }
 
 }
@@ -78,9 +81,8 @@ function initNeighbors(node, graph) {
 }
 
 function drawPath(path) {
-  console.log("DRAW");
   noFill();
-  stroke(255);
+  stroke(color(255, 0, 255));
   strokeWeight(w / 2);
   beginShape();
   for (p of path) {
@@ -100,7 +102,8 @@ function setup() {
     for (var j = 0; j < rows; j++) {
       var key = arrToKey([i, j]);
       graph[key] = new Node(0, 0, 0, i, j);
-      graphVisual[key] = new NodeVisual(graph[key], i*w + w/2, j*h + h/2, w/2, h/2);
+      // graphVisual[key] = new NodeVisual(graph[key], i*w + w/2, j*h + h/2, w/2, h/2);
+      graphVisual[key] = new NodeVisual(graph[key], i*w, j*h, w/2, h/2);
       graph[key].addUserData(graphVisual[key]);
     }
   }
@@ -118,6 +121,7 @@ function setup() {
 }
 
 function draw() {
+  background(0);
   if (aStar.pathFound) {
     noLoop(); 
     console.log("PATH FOUND");
@@ -127,9 +131,19 @@ function draw() {
     aStar.update();
   }
 
-  for (key in graph) graphVisual[key].show(0);
-  for (let node of aStar.closedSet) node.userData.show(color(255, 0, 0));
-  for (let node of aStar.openSet) node.userData.show(color(0, 255, 0));
+  var maxFudge = 0;
+  for (let key in graph) {
+    if (graph[key].fudge > maxFudge) {
+      maxFudge = graph[key].fudge;
+    }
+  }
+
+  for (key in graph) {
+    var nodeColor = 255*graph[key].fudge/maxFudge;
+    graphVisual[key].show(nodeColor);
+  }
+  for (let node of aStar.closedSet) node.userData.show(color(0, 255, 0, 30));
+  for (let node of aStar.openSet) node.userData.show(color(0, 255, 0, 50));
 
   if (!(aStar.current == aStar.start)) drawPath(aStar.path());
 }

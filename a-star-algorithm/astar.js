@@ -54,7 +54,7 @@ class aStarSearch {
 
             if (newPath) {
                 neighbor.h = this.heuristicFxn(neighbor, this.end);
-                neighbor.f = neighbor.g + neighbor.h;
+                neighbor.f = neighbor.g + neighbor.h + neighbor.fudge;
                 neighbor.previous = this.current;
             }
         }
@@ -75,7 +75,6 @@ class aStarSearch {
             path.push(temp.previous);
             temp = temp.previous;
         }
-        console.log(path);
         return path;
     }
 }
