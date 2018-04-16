@@ -1,168 +1,135 @@
-var cols = 40;
-var rows = 40;
+var number = 10;
+var cols = number;
+var rows = number;
 var w, h;
-var grid = new Array(cols);
-
-var openSet = [];
-var closedSet = [];
-var start;
-var end;
-var path = [];
-
-function removeFromArray(arr, elt) {
-	for (var i = arr.length - 1; i >= 0; i--) {
-		if (arr[i] == elt) {
-			arr.splice(i, 1);
-			return;
-		}
-	}
-}
+var aStar;
 
 function heuristic(a, b) {
-	// return (a.i-b.i)*(a.i-b.i) - (a.j-b.j)*(a.j-b.j);
-	return dist(a.i, a.j, b.i, b.j);
-	// return abs(a.i - b.i) + abs(a.j - b.j);
+  // return (a.i-b.i)*(a.i-b.i) - (a.j-b.j)*(a.j-b.j);
+  return dist(a.i, a.j, b.i, b.j);
+  // return abs(a.i - b.i) + abs(a.j - b.j);
 }
 
-function Spot(i, j) {
-	this.i = i;
-	this.j = j;
+function distanceFunction(a, b) {
+  return 1;
+}
 
-	this.f = 0;
-	this.g = 0;
-	this.h = 0;
+class Node {
+  constructor(f, g, h, i, j) {
+    this.f = 0;
+    this.g = 0;
+    this.h = 0;
+    this.i = i;
+    this.j = j;
+    this.neighbors = [];
+    this.userData;
+    this.previous;
+  }
 
-	this.neighbors = [];
-	this.previous = undefined;
-	this.wall = false;
+  addNeighbors(neighbors) {
+    this.neighbors = neighbors;
+  }
 
-	if (random(1) < 0.3) this.wall = true;
+  addUserData(userData) {
+    this.userData = userData;
+  }
+}
 
-	this.show = function(color) {
-		fill(color);
-		if (this.wall) fill(0);
-		noStroke();
-		ellipse(this.i * w + w/2, this.j * h + h/2, w, h);
+class NodeVisual {
+  constructor(node, x, y, semiX, semiY) {
+    this.node = node;
+    this.x = x;
+    this.y = y;
+    this.semiX = semiX;
+    this.semiY = semiY;
+  }
 
-	}
+  show(color) {
+    fill(color);
+    noStroke();
+    ellipse(this.x, this.y, 2*this.semiX, 2*this.semiY);
+  }
 
-	this.addNeighbors = function(grid) {
-		var i = this.i;
-		var j = this.j;
-		if (i < cols - 1) this.neighbors.push(grid[i + 1][j]);
-		if (i > 0) this.neighbors.push(grid[i - 1][j]);
-		if (j < rows - 1) this.neighbors.push(grid[i][j + 1]);
-		if (j > 0) this.neighbors.push(grid[i][j - 1]);
+}
 
-		if (i > 0 && j > 0) this.neighbors.push(grid[i-1][j-1]);
-		if (i < cols-1 && j > 0) this.neighbors.push(grid[i+1][j-1]);
-		if (i > 0 && j < rows-1) this.neighbors.push(grid[i-1][j+1]);
-		if (i < cols-1 && j < rows-1) this.neighbors.push(grid[i+1][j+1]);
-	}
+function arrToKey(arr) {
+  return arr.join(',');
+}
+
+function keyToArr(key) {
+  return JSON.parse("[" + key + "]");
+}
+
+function initNeighbors(node, graph) {
+  var i = node.i;
+  var j = node.j;
+  var neighbors = [];
+  if (i < cols-1) neighbors.push(graph[arrToKey([i + 1, j])]);
+  if (i > 0) neighbors.push(graph[arrToKey([i - 1, j])]);
+  if (j < rows-1) neighbors.push(graph[arrToKey([i, j + 1])]);
+  if (j > 0) neighbors.push(graph[arrToKey([i, j - 1])]);
+
+  if (i > 0 && j > 0) neighbors.push(graph[arrToKey([i-1, j-1])]);
+  if (i < cols-1 && j > 0) neighbors.push(graph[arrToKey([i+1, j-1])]);
+  if (i > 0 && j < rows-1) neighbors.push(graph[arrToKey([i-1, j+1])]);
+  if (i < cols-1 && j < rows-1) neighbors.push(graph[arrToKey([i+1, j+1])]);
+
+  return neighbors;
+}
+
+function drawPath(path) {
+  console.log("DRAW");
+  noFill();
+  stroke(255);
+  strokeWeight(w / 2);
+  beginShape();
+  for (p of path) {
+    vertex(p.userData.x, p.userData.y);
+  }
+  endShape();
 }
 
 function setup() {
-	createCanvas(400, 400);
-	w = width / cols;
-	h = height / rows;
-	for (var i = 0; i < cols; i++) {
-		grid[i] = new Array(rows);
-	}
+  createCanvas(400, 400);
+  w = width / cols;
+  h = height / rows;
 
-	for (var i = 0; i < cols; i++) {
-		for (var j = 0; j < rows; j++) {
-			grid[i][j] = new Spot(i, j);
-		}
-	}
+  graph = new Map();
+  graphVisual = new Map();
+  for (var i = 0; i < cols; i++) {
+    for (var j = 0; j < rows; j++) {
+      var key = arrToKey([i, j]);
+      graph[key] = new Node(0, 0, 0, i, j);
+      graphVisual[key] = new NodeVisual(graph[key], i*w + w/2, j*h + h/2, w/2, h/2);
+      graph[key].addUserData(graphVisual[key]);
+    }
+  }
 
-	for (var i = 0; i < cols; i++) {
-		for (var j = 0; j < rows; j++) {
-			grid[i][j].addNeighbors(grid);
-		}
-	}
+  for (var i = 0; i < cols; i++) {
+    for (var j = 0; j < rows; j++) {
+      var node = graph[arrToKey([i, j])];
+      node.addNeighbors(initNeighbors(node, graph));
+    }
+  }
 
-	start = grid[0][0];
-	end = grid[cols - 1][rows - 1];
-	openSet.push(start);
-	start.wall = false;
-	end.wall = false;
+  start = graph[arrToKey([0, 0])];
+  end = graph[arrToKey([cols-1, rows-1])];
+  aStar = new aStarSearch(start, end, distanceFunction, heuristic);
 }
 
 function draw() {
-	if (openSet.length > 0) {
-		winner = openSet[0];
-		for (var p of openSet) {
-			if (p.f < winner.f) {
-				winner = p;
-			}
+  if (aStar.pathFound) {
+    noLoop(); 
+    console.log("PATH FOUND");
+  }
 
-			if (winner === end) {
-				console.log("DONE!");
-				noLoop();
-			}
+  if (aStar.openSet.size > 0 && !aStar.pathFound) {
+    aStar.update();
+  }
 
-			removeFromArray(openSet, winner);
-			closedSet.push(winner);
+  for (key in graph) graphVisual[key].show(0);
+  for (let node of aStar.closedSet) node.userData.show(color(255, 0, 0));
+  for (let node of aStar.openSet) node.userData.show(color(0, 255, 0));
 
-			var neighbors = winner.neighbors;
-			for (neighbor of neighbors) {
-				if (!closedSet.includes(neighbor) && !neighbor.wall){
-					var tempG = winner.g + 1;
-					var newPath = false;
-					if (openSet.includes(neighbor)) {
-						if (tempG < neighbor.g) {
-							neighbor.g = tempG;
-							newPath = true;
-						}
-					} else {
-						neighbor.g = tempG;
-						openSet.push(neighbor);
-						newPath = true;
-					}
-
-					if (newPath) {
-						neighbor.h = heuristic(neighbor, end);
-						neighbor.f = neighbor.g + neighbor.h;
-						neighbor.previous = winner;
-					}
-				}
-
-			}
-		}
-	} else {
-		console.log("NO SOLUTION");
-		noLoop();
-		return;
-	}
-	// background(0);
-	for (var i = 0; i < cols; i++) {
-		for (var j = 0; j < rows; j++) {
-			grid[i][j].show(color(255));
-		}
-	}
-
-	for (p of closedSet) {
-		p.show(color(255, 0, 0));
-	}
-
-	for (p of openSet) {
-		p.show(color(0, 255, 0));
-	}
-
-	path = [];
-	var temp = winner;
-	path.push(temp);
-	while (temp.previous) {
-		path.push(temp.previous);
-		temp = temp.previous;
-	}
-
-	noFill();
-	stroke(255);
-	strokeWeight(w / 2);
-	beginShape();
-	for (p of path) {
-		vertex(p.i*w + w/2, p.j*h + h/2);
-	}
-	endShape();
+  if (!(aStar.current == aStar.start)) drawPath(aStar.path());
 }

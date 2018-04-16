@@ -36,20 +36,27 @@ class aStarSearch {
 
         for (let neighbor of this.current.neighbors) {
             if (this.closedSet.has(neighbor)) {
-                return;
+                continue;
             }
-            if (!this.openSet.has(neighbor)) {
-                this.openSet.add(neighbor);
-            }
-
+            var newPath = false;
             var tempGScore = this.current.g + this.distFxn(this.current, neighbor);
-            if (tempGScore >= neighbor.g) {
-                return;
+            
+            if(this.openSet.has(neighbor)) {
+                if (tempGScore < neighbor.g) {
+                    neighbor.g = tempGScore;
+                    newPath = true;
+                }
+            } else {
+                neighbor.g = tempGScore;
+                this.openSet.add(neighbor);
+                newPath = true;
             }
 
-            neighbor.previous = this.current;
-            neighbor.g = tempGScore;
-            neighbor.f = neighbor.g + this.heuristicFxn(neighbor, goal);
+            if (newPath) {
+                neighbor.h = this.heuristicFxn(neighbor, this.end);
+                neighbor.f = neighbor.g + neighbor.h;
+                neighbor.previous = this.current;
+            }
         }
     }
 
@@ -61,13 +68,14 @@ class aStarSearch {
     }
 
     path() {
-        var path = [this.current];
-        var current = this.current;
-        var previous = this.current.previous;
-        while (previous.has(current)) {
-            current = current.previous;
-            path.push(current);
+        var path = [];
+        var temp = this.current;
+        path.push(temp);
+        while (temp.previous) {
+            path.push(temp.previous);
+            temp = temp.previous;
         }
+        console.log(path);
         return path;
     }
 }
