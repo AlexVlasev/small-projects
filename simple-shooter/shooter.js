@@ -38,6 +38,7 @@ function setup() {
   		objects[i] =  [x, y, z, col];
   	}
   	display = createP("");
+  	
 }
 
 function draw() {
