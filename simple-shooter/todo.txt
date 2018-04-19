@@ -1,0 +1,7 @@
+To Do:
+
+[x] 1. Simple 3D Scene with ellipsoids
+[x] 2. Perspective
+[x] 3. Change view in the scene with the mouse movement
+[x] 4. Move about in the scene with key movements
+[ ] 5. ... 
